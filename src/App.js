@@ -10,7 +10,7 @@ const App = () => {
   useEffect(() => {
     const getRepo = async() => {
       try {
-        const response = await axios.get('https://backoffice.pogovorimo.com.ua/api/v1/applicant/?format=json')
+        const response = await axios.get('https://backoffice.pogovorimo.com.ua/api/v1/applicant/')
         console.log(response)
         const myRepo = response.data
         setRepo(myRepo)
