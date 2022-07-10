@@ -1,94 +1,115 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
-import { Pagination } from "react-custom-pagination";
+const picuri = 'https://emagweb.github.io/sdev/icons/'
+
+const iconuri = 'https://skillicons.dev/icons?i='
 
 const App = () => {
 
-  const [repo, setRepo] = useState([])
+  const goToTop = () => {
+		window.scrollTo({
+			top: 0,
+			behavior: 'smooth',
+		})
+	}
 
-  useEffect(() => {
-    const getRepo = async() => {
-      try {
-        const response = await axios.get('https://backoffice.pogovorimo.com.ua/api/v1/applicant/')
-        console.log(response)
-        const myRepo = response.data
-        setRepo(myRepo)
-      } catch(error) {
-        console.log(error)
-      }
+  const [vacancies, setVacancies] = useState([])
+  const [currentPage,setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
+  const getPages = () => {
+    const elements = []
+    for (let i = 1; i <= totalPages; i++) {
+      elements.push(
+         <span className="v-pages"><button
+            key={i}
+            className={currentPage !== i ? '' : 'noactive'}
+            onClick={() => currentPage !== i ? 
+            (setCurrentPage(i), 
+            fetchVacancies(), goToTop()) : setCurrentPage(currentPage)
+          }>{i < 10 ? `0${i}` : i}</button></span>
+      )
     }
-    getRepo()
-  }, [])
-
-
-  const posts = [
-    { id: "1", name: "user1" },
-    { id: "2", name: "user2" },
-    { id: "3", name: "user3" },
-    { id: "4", name: "user4" },
-    { id: "5", name: "user5" },
-    { id: "6", name: "user6" },
-    { id: "7", name: "user7" },
-    { id: "8", name: "user8" },
-    { id: "9", name: "user9" },
-    { id: "10", name: "user10" },
-    { id: "11", name: "user11" },
-    { id: "12", name: "user12" },
-    { id: "13", name: "user13" },
-    { id: "14", name: "user14" },
-    { id: "15", name: "user15" },
-    { id: "16", name: "user16" },
-    { id: "17", name: "user17" },
-    { id: "18", name: "user18" },
-    { id: "19", name: "user19" },
-    { id: "20", name: "user20" },
-  ];
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [postsPerPage] = useState(4);
-
-  //get current Posts
-
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = repo.slice(indexOfFirstPost, indexOfLastPost);
-
-  const currentPostsObject = posts.slice(indexOfFirstPost, indexOfLastPost);
-
-  // when user clicks on number this function will execute
-
-  const paginate = (number) => {
-    setCurrentPage(number);
+    return elements
   };
 
+  function fetchVacancies() {
+    return function(dispatch) {
+      dispatch(vacancies())
+      axios.get(`https://backoffice.pogovorimo.com.ua/api/v1/applicant/?page=${currentPage}`)
+        .then((res) => {
+          dispatch(res.data.results)
+          setVacancies(res.data.results)
+        })
+    }
+  }
+
+
+
+  useEffect (() => {    
+    const getVacancies = async () => {
+      const res = await axios.get(`https://backoffice.pogovorimo.com.ua/api/v1/applicant/?page=${currentPage}`)
+      setVacancies(res.data.results)
+      setTotalPages(res.data.total_pages)
+      setCurrentPage(res.data.current_page)
+    }
+    getVacancies()
+  }, [currentPage])
+
+
   return (
-    <>
-      <br />
-      <h1>Pagination Example Not Working</h1>
-      <div style={{ width: "300px", textAlign: "center" }}>
-        {currentPosts.map((item) => {
-          return <p key={item.results.id}>{item.results.id}</p>;
-        })}
-        <Pagination
-          totalPosts={repo.length}
-          postsPerPage={postsPerPage}
-          paginate={paginate}
-        />
+    <section className="page">
+      <div className="features">
+        <h3 className="section__title serv">Your Future Tech Team</h3>
+        <p className="subtitle__text serv">
+          The Best Remote Developers In The Ukraine
+        </p>
+        <div className="feature-row">
+          {vacancies.map((item, index) =>  (
+            <div className="feature" key={index}>
+              <div>
+                <h3 className="feature-title">{item.position.length > 21 ? item.position.slice(0,21) + ' ...' : item.position }</h3>
+                <div className="flex-row">
+                  <img className="flex-pic" src={picuri + (!item.business_area[0] ? 'software' : item.business_area) + '.svg'} alt={item.business_area} />
+                  <div className="flex-right">
+                    <p className="bg-yellow">{item.general_experience + ' years'}</p>
+                    <p className="salary">${item.salary}/hour</p>
+                  </div>
+                </div>
+                <div className="skills-icons">
+                  <h3 className="dark">Expert In</h3>
+                  <p className="skillsets">
+                    <img src={iconuri + item.technologies.slice(0,6)} className="skill-icon" alt={'skills'} />
+                  </p>
+                </div>
+              </div>
+              <div>
+                <div className="feature-desc">
+                  <p className="dark m-20">{item.summary}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className='flex-center'>
+          <button  
+            className={currentPage > 1 ? '' : 'noactive'}
+            onClick={() => currentPage > 1 ? 
+            (setCurrentPage(currentPage - 1), 
+            fetchVacancies(), goToTop()) : setCurrentPage(currentPage)
+          }>Prev</button>
+          {getPages()}
+          <button 
+            className={currentPage < totalPages ? '' : 'noactive'}
+            onClick={() => currentPage < totalPages ?
+            (setCurrentPage(currentPage + 1),
+            fetchVacancies(), goToTop()) : setCurrentPage(currentPage)
+          }>Next</button>
+        </div>
       </div>
-      <br />
-      <h1>Pagination Example Workig</h1>
-      <div style={{ width: "300px", textAlign: "center" }}>
-        {currentPostsObject.map((item) => {
-          return <p key={item.id}>{item.name}</p>;
-        })}
-        <Pagination
-          totalPosts={posts.length}
-          postsPerPage={postsPerPage}
-          paginate={paginate}
-        />
-      </div>
-    </>
-  );
-};
-export default App;
+    </section>
+  )
+}
+
+export default App
